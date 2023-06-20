@@ -1,0 +1,11 @@
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+127.0.0.1   localhost localhost.localdomain
+::1         localhost localhost.localdomain
+
+127.0.0.1   centos8.localdomain
+
+192.168.56.2    puppet.unir.actividad1.mx    puppet
+<% @entries.each do |host, ip| -%>
+<%= ip %> <%= host %>
+<% end -%>

@@ -1,0 +1,102 @@
+$initial_server = <<SCRIPT
+sudo timedatectl set-timezone America/Mexico_City
+
+# Abrimos el puerto 8140
+sudo firewall-cmd --permanent --add-port=8140/tcp
+sudo firewall-cmd --reload
+
+# Instalar Puppet Server
+rpm -Uvh https://yum.puppet.com/puppet8-release-el-8.noarch.rpm
+#  sudo dnf update -y && sudo dnf upgrade -y && sudo dnf install puppet-agent -y
+sudo yum install -y puppetserver
+
+# Configurar Puppet Server
+sudo sed -i 's/-Xms2g/-Xms512m/' /etc/sysconfig/puppetserver
+sudo sed -i 's/-Xmx2g/-Xmx512m/' /etc/sysconfig/puppetserver
+sudo echo "*.unir.actividad1.mx" >> /etc/puppetlabs/puppet/autosign.conf
+sudo echo "autosign = /etc/puppetlabs/puppet/autosign.conf" >> /etc/puppetlabs/puppet/puppet.conf
+
+# Instalar los módulos de puppet necesarios
+sudo -i puppet module install puppet-firewalld
+sudo -i puppet module install puppetlabs-mysql
+sudo -i puppet module install puppet-selinux
+sudo -i puppet module install puppet-archive
+sudo -i puppet module install puppet-nginx
+
+# Iniciar el servicio de Puppet Server
+sudo systemctl enable puppetserver
+sudo systemctl start puppetserver
+
+# Mover el código
+sudo cp -R /tmp/code/* /etc/puppetlabs/code/environments/production/
+SCRIPT
+
+$initial_db = <<SCRIPT
+sudo echo "192.168.56.2    puppet.unir.actividad1.mx    puppet" >> /etc/hosts
+sudo timedatectl set-timezone America/Mexico_City
+rpm -Uvh https://yum.puppet.com/puppet8-release-el-8.noarch.rpm
+#  sudo dnf update -y && sudo dnf upgrade -y && sudo dnf install puppet-agent -y
+sudo dnf install puppet-agent -y
+SCRIPT
+
+$initial_site = <<SCRIPT
+sudo echo "192.168.56.2    puppet.unir.actividad1.mx    puppet" >> /etc/hosts
+sudo timedatectl set-timezone America/Mexico_City
+rpm -Uvh https://yum.puppet.com/puppet8-release-el-8.noarch.rpm
+#  sudo dnf update -y && sudo dnf upgrade -y && sudo dnf install puppet-agent -y
+sudo dnf install puppet-agent -y
+SCRIPT
+
+$initial_proxy = <<SCRIPT
+sudo echo "192.168.56.2    puppet.unir.actividad1.mx    puppet" >> /etc/hosts
+sudo timedatectl set-timezone America/Mexico_City
+rpm -Uvh https://yum.puppet.com/puppet8-release-el-8.noarch.rpm
+#  sudo dnf update -y && sudo dnf upgrade -y && sudo dnf install puppet-agent -y
+sudo dnf install puppet-agent -y
+SCRIPT
+
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "generic/centos8"
+
+  config.vm.define :puppet_server do |server|
+    server.vm.provision "shell", inline: $initial_server
+    server.vm.hostname = "puppet.unir.actividad1.mx"
+    server.vm.network "private_network", ip: "192.168.56.2"
+    server.vm.synced_folder "code", "/tmp/code"
+  end
+
+  config.vm.define :wordpress_db do |db|
+    db.vm.provision "shell", inline: $initial_db
+    db.vm.hostname = "db.unir.actividad1.mx"
+    db.vm.network "private_network", ip: "192.168.56.10"
+
+    db.vm.provision "puppet_server" do |puppet|
+      puppet.puppet_server = "puppet.unir.actividad1.mx"
+      puppet.options = "--verbose --summarize"
+    end
+  end
+
+  config.vm.define :wordpress_site do |app|
+    app.vm.provision "shell", inline: $initial_site
+    app.vm.hostname = "site.unir.actividad1.mx"
+    app.vm.network "private_network", ip: "192.168.56.20"
+
+    app.vm.provision "puppet_server" do |puppet|
+      puppet.puppet_server = "puppet.unir.actividad1.mx"
+      puppet.options = "--verbose --summarize"
+    end
+  end
+
+  config.vm.define :wordpress_proxy do |proxy|
+    proxy.vm.provision "shell", inline: $initial_proxy
+    proxy.vm.hostname = "proxy.unir.actividad1.mx"
+    proxy.vm.network "private_network", ip: "192.168.56.30"
+    proxy.vm.network "forwarded_port", guest: 8080, host: 1800
+
+    proxy.vm.provision "puppet_server" do |puppet|
+      puppet.puppet_server = "puppet.unir.actividad1.mx"
+      puppet.options = "--verbose --summarize"
+    end
+  end
+end

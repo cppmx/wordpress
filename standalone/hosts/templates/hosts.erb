@@ -1,0 +1,7 @@
+<% @localhosts_ips.each do |ip| %>
+<%= ip %>   localhost
+<% end %>
+
+<% @entries.each do |host, ip| -%>
+<%= ip %> <%= host %>
+<% end -%>
