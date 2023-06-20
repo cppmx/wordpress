@@ -1,4 +1,5 @@
 $initial_server = <<SCRIPT
+# Configurar la zona horaria, esta deberá de ser la misma en todas las VMs
 sudo timedatectl set-timezone America/Mexico_City
 
 # Abrimos el puerto 8140
@@ -31,28 +32,16 @@ sudo systemctl start puppetserver
 sudo cp -R /tmp/code/* /etc/puppetlabs/code/environments/production/
 SCRIPT
 
-$initial_db = <<SCRIPT
+$initial_agent = <<SCRIPT
+# Agregar los datos de puppet server al archivo de hosts
 sudo echo "192.168.56.2    puppet.unir.actividad1.mx    puppet" >> /etc/hosts
-sudo timedatectl set-timezone America/Mexico_City
-rpm -Uvh https://yum.puppet.com/puppet8-release-el-8.noarch.rpm
-#  sudo dnf update -y && sudo dnf upgrade -y && sudo dnf install puppet-agent -y
-sudo dnf install puppet-agent -y
-SCRIPT
 
-$initial_site = <<SCRIPT
-sudo echo "192.168.56.2    puppet.unir.actividad1.mx    puppet" >> /etc/hosts
+# Configurar la zona horaria
 sudo timedatectl set-timezone America/Mexico_City
-rpm -Uvh https://yum.puppet.com/puppet8-release-el-8.noarch.rpm
-#  sudo dnf update -y && sudo dnf upgrade -y && sudo dnf install puppet-agent -y
-sudo dnf install puppet-agent -y
-SCRIPT
 
-$initial_proxy = <<SCRIPT
-sudo echo "192.168.56.2    puppet.unir.actividad1.mx    puppet" >> /etc/hosts
-sudo timedatectl set-timezone America/Mexico_City
+# Actualizar el sistema e instalar el agente
 rpm -Uvh https://yum.puppet.com/puppet8-release-el-8.noarch.rpm
-#  sudo dnf update -y && sudo dnf upgrade -y && sudo dnf install puppet-agent -y
-sudo dnf install puppet-agent -y
+sudo dnf update -y && sudo dnf upgrade -y && sudo dnf install puppet-agent -y
 SCRIPT
 
 
@@ -67,7 +56,7 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.define :wordpress_db do |db|
-    db.vm.provision "shell", inline: $initial_db
+    db.vm.provision "shell", inline: $initial_agent
     db.vm.hostname = "db.unir.actividad1.mx"
     db.vm.network "private_network", ip: "192.168.56.10"
 
@@ -78,7 +67,7 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.define :wordpress_site do |app|
-    app.vm.provision "shell", inline: $initial_site
+    app.vm.provision "shell", inline: $initial_agent
     app.vm.hostname = "site.unir.actividad1.mx"
     app.vm.network "private_network", ip: "192.168.56.20"
 
@@ -89,7 +78,7 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.define :wordpress_proxy do |proxy|
-    proxy.vm.provision "shell", inline: $initial_proxy
+    proxy.vm.provision "shell", inline: $initial_agent
     proxy.vm.hostname = "proxy.unir.actividad1.mx"
     proxy.vm.network "private_network", ip: "192.168.56.30"
     proxy.vm.network "forwarded_port", guest: 8080, host: 1800

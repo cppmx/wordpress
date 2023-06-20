@@ -1,18 +1,26 @@
 $initial_db = <<SCRIPT
+# Configurar la zona horaria
 sudo timedatectl set-timezone America/Mexico_City
+
+# Actualizar el sistema e instalar el agente
 sudo -i rpm -Uvh https://yum.puppet.com/puppet8-release-el-8.noarch.rpm
-#  sudo dnf update -y && sudo dnf upgrade -y && sudo dnf install puppet-agent -y
-sudo dnf install puppet-agent -y
+sudo dnf update -y && sudo dnf upgrade -y && sudo dnf install puppet-agent -y
+
+# Agregar los módulos de puppet
 sudo -i puppet config print | grep -i modules
 sudo -i puppet module install puppet-firewalld
 sudo -i puppet module install puppetlabs-mysql
 SCRIPT
 
 $initial_site = <<SCRIPT
+# Configurar la zona horaria
 sudo timedatectl set-timezone America/Mexico_City
+
+# Actualizar el sistema e instalar el agente
 sudo -i rpm -Uvh https://yum.puppet.com/puppet8-release-el-8.noarch.rpm
-#  sudo dnf update -y && sudo dnf upgrade -y && sudo dnf install puppet-agent curl unzip -y
-sudo dnf install puppet-agent -y
+sudo dnf update -y && sudo dnf upgrade -y && sudo dnf install puppet-agent curl unzip -y
+
+# Agregar los módulos de puppet
 sudo -i puppet config print | grep -i modules
 sudo -i puppet module install puppet-firewalld
 sudo -i puppet module install puppet-selinux
@@ -20,10 +28,14 @@ sudo -i puppet module install puppet-archive
 SCRIPT
 
 $initial_proxy = <<SCRIPT
+# Configurar la zona horaria
 sudo timedatectl set-timezone America/Mexico_City
+
+# Actualizar el sistema e instalar el agente
 sudo -i rpm -Uvh https://yum.puppet.com/puppet8-release-el-8.noarch.rpm
-#  sudo dnf update -y && sudo dnf upgrade -y && sudo dnf install puppet-agent curl unzip -y
-sudo dnf install puppet-agent -y
+sudo dnf update -y && sudo dnf upgrade -y && sudo dnf install puppet-agent curl unzip -y
+
+# Agregar los módulos de puppet
 sudo -i puppet config print | grep -i modules
 sudo -i puppet module install puppet-firewalld
 sudo -i puppet module install puppet-selinux
